@@ -47,6 +47,7 @@ export class NgbdModalContent {
   @Input() recipe: any;
   @Input() image: string;
   @Input() cuisine: any;
+  @Input() ingredients: any;
   isSaving: boolean;
   recipeIngredients = new Array();
   testVar: Boolean = true;
@@ -70,11 +71,10 @@ export class NgbdModalContent {
   save(data) {
       this.isSaving = true;
       this.favorite = new Favorites();
-      this.isSaving = true;
       this.favorite.ingredients = "";
       this.favorite.recipe_title = data.name;
       this.favorite.cuisine = "";
-      for(let ingredient of data.ingredientLines){
+      for(let ingredient of this.ingredients){
           this.favorite.ingredients += ingredient.toString() + ', ';
       }
       if(this.cuisine !== undefined){
@@ -481,9 +481,8 @@ export class RecommendComponent implements OnInit, OnDestroy {
         this.open(data, attributes)
     }
     
-    open(query: any, attributes:any) {
-        console.log(attributes.cuisine);
-        
+    open(query: any, recipe:any) {
+        console.log(recipe.attributes.cuisine);
         const modalRef = this.modalService.open(NgbdModalContent, {size: 'lg'});
         this.recipeDetailsFound = true;
         this.largeImageDetails = query.images;
@@ -494,7 +493,8 @@ export class RecommendComponent implements OnInit, OnDestroy {
             largeImage = i.hostedLargeUrl;
         }
         modalRef.componentInstance.recipe = query;
-        modalRef.componentInstance.cuisine = attributes.cuisine;
+        modalRef.componentInstance.cuisine = recipe.attributes.cuisine;
+        modalRef.componentInstance.ingredients = recipe.ingredients;
         modalRef.componentInstance.image = largeImage;  
       }
     
@@ -545,11 +545,17 @@ export class RecommendComponent implements OnInit, OnDestroy {
     help() {
         const modalRef = this.modalService.open(NgbdHelpContent, { size : 'lg' });
       }
+    
     save(data) {
         this.isSaving = true;
-        var today = new Date().toISOString().split("T")[0]; 
+        var today = new Date();
         this.shoppingList = new Shopping_List();
-        this.shoppingList.items = data.ingredients_not_owned + "";
+        this.shoppingList.items = "";
+        for(let ingredient of data.ingredients_not_owned){
+            if(ingredient != 'undefined')
+                this.shoppingList.items += ingredient.toString() + ', ';
+        }
+        this.shoppingList.notes = "Created on: " + today + ' from the following recipe: ' + data.recipeName;
         if (this.shoppingList.id !== undefined) {
             this.subscribeToSaveResponse(
                 this.shoppingListService.update(this.shoppingList));
