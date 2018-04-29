@@ -2,30 +2,142 @@ import { Component, OnInit, Input } from '@angular/core';
 import { NgbModalRef, NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Account, LoginModalService, Principal, RecipeListService } from '../shared';
+import { Observable } from "rxjs/Observable";
+import { FavoritesService } from "../entities/favorites/favorites.service";
+import { Favorites } from '../entities/favorites/favorites.model';
+import { Subscription } from "rxjs/Subscription";
 
 //Modal dialog for recipe details
 @Component({
   selector:'ngbd-modal-content',
   template:`<div class="modal-header">
-      <h4 class="modal-title">Recipe Info</h4>
+      <h4 class="modal-title">Recipe Info   </h4> 
       <button type="button" class="close" aria-label="Close" (click)="activeModal.dismiss('Cross click')">
         <span aria-hidden="true">&times;</span>
       </button>
     </div>
     <div class="modal-body">
-      <p align="center"><img src="{{image}}"><p>
-      <p>Yields: {{ yield }}</p>
-      <p>
+<ngb-tabset>
+  <ngb-tab title="Main Information">
+    <ng-template ngbTabContent>
+        <p></p>
+        <div align="center">
+          <h2>{{ recipe.name }}</h2><div></div><img src="{{image}}" class="rounded img-responsive">
+          <div *ngIf="recipe.yield">
+              <b>Yields:</b> {{ recipe.yield }}
+          </div>
+          <div *ngIf="recipe.totalTime">
+              <b>Total Time:</b> {{ recipe.totalTime }}
+          </div>
+          <div *ngIf="cuisine">
+              <b>Cuisine:</b>
+              <ng-container *ngFor="let c of cuisine">
+                   {{ c }},
+               </ng-container>
+          </div>
+          </div>
+    </ng-template>
+  </ngb-tab>
+  
+  
+    <ngb-tab title="Detailed Ingredient Information">
+        <ng-template ngbTabContent>
+            <h2><div align = "center">Ingredients: </div></h2>
+            <div *ngFor="let ingredient of recipe.ingredientLines; let i = index">
+                 {{ i+1 }} : {{ ingredient }}
+            </div>
+      </ng-template>
+    </ngb-tab>
+        
+        <ngb-tab title="Recipe Method and Source">
+        <ng-template ngbTabContent>
+                            <p></p>
+                <h2 align = "center">Source</h2>
+                <p></p>
+                This great recipe comes courtesy of {{ recipe.source.sourceDisplayName }}
+                <div></div>
+                You can find more great recipes from them at <a> {{recipe.source.sourceSiteUrl }} </a>
+                <p></p>
+                <h2 align = "center">Method</h2>
+                To get the method to make this recipe, click below: <div></div>
+                <a href='{{recipe.source.sourceRecipeUrl}}' target="_blank" class="btn btn-info" role="button">Click here to go to the source!</a>
+      </ng-template>
+    </ngb-tab>
+    
+        
+
+  </ngb-tabset> 
+  
     </div>
     <div class="modal-footer">
+      <td><button class="btn btn-md btn-outline-primary" (click)="save(recipe)">Save to Favourites</button></td>
       <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
     </div>`
 })
 export class NgbdModalContent {
-  @Input() name;
-  @Input() yield: string;
-  @Input() image: string;
-  constructor(public activeModal: NgbActiveModal) {}
+    @Input() recipe: any;
+    @Input() image: string;
+    @Input() cuisine: any;
+    @Input() ingredients: any;
+    isSaving: boolean;
+    recipeIngredients = new Array();
+    testVar: Boolean = true;
+    favorite: Favorites;
+    currentAccount: any;
+    largeImageDetails: any[];
+    eventSubscriber: Subscription;
+    currentSearch: string;
+    choices = new Array();
+    recipes: any[];
+    recipeFound: boolean = false;
+    recipeDetailsFound: boolean = false;
+    
+    constructor(public activeModal: NgbActiveModal,
+            private eventManager: JhiEventManager,
+            private favoriteService: FavoritesService) {}
+    
+
+    
+    save(data) {
+        this.isSaving = true;
+        this.favorite = new Favorites();
+        this.favorite.ingredients = "";
+        this.favorite.recipe_title = data.name;
+        this.favorite.cuisine = "";
+        for(let ingredient of this.ingredients){
+            this.favorite.ingredients += ingredient.toString() + ', ';
+        }
+        if(this.cuisine !== undefined){
+            console.log(this.cuisine.length);
+            for(let c of this.cuisine){
+                this.favorite.cuisine += c +', ';
+            }
+        }
+        this.favorite.source_URL = data.source.sourceRecipeUrl;
+       
+        if (this.favorite.id !== undefined) {
+            this.subscribeToSaveResponse(
+                this.favoriteService.update(this.favorite));
+        } else {
+            this.subscribeToSaveResponse(
+                this.favoriteService.create(this.favorite));
+        }
+
+    }
+    
+    private subscribeToSaveResponse(result: Observable<Favorites>) {
+        result.subscribe((res: Favorites) =>
+            this.onSaveSuccess(res), (res: Response) => this.onSaveError());
+    }
+    
+    private onSaveSuccess(result: Favorites) {
+        this.eventManager.broadcast({ name: 'favoritesListModification', content: 'OK'});
+        this.isSaving = false;
+    }
+    
+    private onSaveError() {
+        this.isSaving = false;
+    }
 }
 
 
@@ -38,10 +150,14 @@ export class NgbdModalContent {
 
 })
 export class HomeComponent implements OnInit {
+    largeImage: any;
     account: Account;
     modalRef: NgbModalRef;
     recipes: any[];
     diets = new Array();
+    recipeIngredients = new Array();
+    ingredientNames = new Array();
+
     searchQuery: string = null;
     ingredients = new Array();
     recipeParam: string = "";
@@ -97,15 +213,53 @@ export class HomeComponent implements OnInit {
     login() {
         this.modalRef = this.loginModalService.open();
     }
+    
+    testBoogaloo(query){
+        for(let q of query){
+            this.recipeIngredients.push(q.ingredients);
+        }
+        console.log(this.recipeIngredients);
+    } 
    
     handleSuccess(data){
         this.recipeFound = true;
         this.recipes = data.matches;
-        console.log(data.matches);
+        for(let recipe of this.recipes){
+            this.getImg(recipe);
+            if(this.account != null){
+            var ingredientsOnHand = new Array();
+            var ingredientsNotOnHand = new Array();
+            for(let recipeIngredient of recipe.ingredients){
+                if(this.ingredientNames.indexOf(recipeIngredient) == -1){
+                    ingredientsNotOnHand.push(recipeIngredient);
+                }
+                else
+                    ingredientsOnHand.push(recipeIngredient);
+            }
+            recipe.ingredients_owned = ingredientsOnHand;
+            recipe.ingredients_not_owned = ingredientsNotOnHand;
+            this.testBoogaloo(recipe);
+            }
+        }
+        console.log(this.recipes);
     }
     
-    handleDetails(data){
-        this.open(data)
+    handleDetails(data, attributes){
+        this.open(data, attributes)
+    }
+    
+    getImg(query: any){
+        this._recipeListService.getDetails(query.id).subscribe(
+                data => this.handleImage(data, query),
+                error => this.handleError(error))
+                return this.largeImageDetails;  
+    }
+    
+    handleImage(data: any, query:any){   
+        for(let i of data.images){
+            this.largeImage = i.hostedLargeUrl;
+        }   
+        query.largeImage = this.largeImage;
     }
     
     //Logs any errors to console
@@ -115,9 +269,9 @@ export class HomeComponent implements OnInit {
     
     
     // Pings our second API: Giving us the details of a recipe based on the UID given to us from our primary API
-    searchDetail(query: string){
+    searchDetail(query: string, attributes:any){
         return this._recipeListService.getDetails(query).subscribe(
-                data => this.handleDetails(data),
+                data => this.handleDetails(data, attributes),
                 error => this.handleError(error),
                 () => console.log("Request Complete!"))
     }
@@ -167,17 +321,20 @@ export class HomeComponent implements OnInit {
     }
     
     // Opens up our modal dialog 'ngbd-modal-dialog'. Receives JSON-P object through query. 
-    open(query: any) {
-      const modalRef = this.modalService.open(NgbdModalContent);
-      this.recipeDetailsFound = true;
-      this.largeImageDetails = query.images;
-      var largeImage: any;
-      console.log(query);
-      for(let i of this.largeImageDetails){
-          console.log(i.hostedLargeUrl)
-          largeImage = i.hostedLargeUrl;
-      }
-      modalRef.componentInstance.yield = query.yield;
-      modalRef.componentInstance.image = largeImage;  
+    open(query: any, recipe:any) {
+        console.log(recipe.attributes.cuisine);
+        const modalRef = this.modalService.open(NgbdModalContent, {size: 'lg'});
+        this.recipeDetailsFound = true;
+        this.largeImageDetails = query.images;
+        var largeImage: any;
+        console.log(query);
+        for(let i of this.largeImageDetails){
+            console.log(i.hostedLargeUrl)
+            largeImage = i.hostedLargeUrl;
+        }
+        modalRef.componentInstance.recipe = query;
+        modalRef.componentInstance.cuisine = recipe.attributes.cuisine;
+        modalRef.componentInstance.ingredients = recipe.ingredients;
+        modalRef.componentInstance.image = largeImage; 
     }
 }

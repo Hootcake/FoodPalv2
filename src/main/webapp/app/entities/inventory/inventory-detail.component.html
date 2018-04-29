@@ -1,6 +1,6 @@
 
-<div *ngIf="inventory">
-    <h2><span>Inventory</span> {{inventory.id}}</h2>
+<div *ngIf="inventory && inventory.user?.login == account.login">
+    <h2><span>Item ID: </span> {{inventory.id}}</h2>
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="row-md jh-entity-details">
@@ -36,5 +36,14 @@
             queryParamsHandling="merge"
             class="btn btn-primary">
         <span class="fa fa-pencil"></span>&nbsp;<span> Edit</span>
+    </button>
+</div>
+
+<div *ngIf="inventory && inventory.user?.login != account.login">
+	  <span>Nice Try! This item doesn't belong to you.</span><div></div>
+	      <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span> Back</span>
     </button>
 </div>

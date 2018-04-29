@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
-
+import { Principal } from '../../shared'
 import { Shopping_List } from './shopping-list.model';
 import { Shopping_ListService } from './shopping-list.service';
 
@@ -15,17 +15,22 @@ export class Shopping_ListDetailComponent implements OnInit, OnDestroy {
     shopping_List: Shopping_List;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
+    account : Account
 
     constructor(
         private eventManager: JhiEventManager,
         private shopping_ListService: Shopping_ListService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private principal: Principal,
     ) {
     }
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['id']);
+        });
+        this.principal.identity().then((account) => {
+            this.account = account;
         });
         this.registerChangeInShopping_Lists();
     }

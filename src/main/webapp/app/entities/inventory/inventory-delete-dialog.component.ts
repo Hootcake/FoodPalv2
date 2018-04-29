@@ -7,6 +7,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Inventory } from './inventory.model';
 import { InventoryPopupService } from './inventory-popup.service';
 import { InventoryService } from './inventory.service';
+import { Principal } from "../../shared";
 
 @Component({
     selector: 'jhi-inventory-delete-dialog',
@@ -15,14 +16,21 @@ import { InventoryService } from './inventory.service';
 export class InventoryDeleteDialogComponent {
 
     inventory: Inventory;
+    account: Account;
 
     constructor(
         private inventoryService: InventoryService,
         public activeModal: NgbActiveModal,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
+        private principal: Principal,
     ) {
     }
-
+    
+    ngOnInit(){
+        this.principal.identity().then((account) => {
+            this.account = account;
+        });
+    }
     clear() {
         this.activeModal.dismiss('cancel');
     }

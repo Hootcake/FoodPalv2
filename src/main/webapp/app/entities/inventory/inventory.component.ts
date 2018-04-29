@@ -2,16 +2,19 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager, JhiParseLinks, JhiAlertService } from 'ng-jhipster';
-
+import { Shopping_ListService } from "../shopping-list/shopping-list.service";
 import { Inventory } from './inventory.model';
 import { InventoryService } from './inventory.service';
 import { ITEMS_PER_PAGE, Principal, ResponseWrapper } from '../../shared';
+import { Shopping_List } from "../shopping-list/shopping-list.model";
+import { Observable } from "rxjs/Observable";
 
 @Component({
     selector: 'jhi-inventory',
     templateUrl: './inventory.component.html'
 })
 export class InventoryComponent implements OnInit, OnDestroy {
+    isSaving: boolean;
 
 currentAccount: any;
     inventories: Inventory[];
@@ -20,6 +23,7 @@ currentAccount: any;
     eventSubscriber: Subscription;
     currentSearch: string;
     routeData: any;
+    shoppingList: Shopping_List;
     links: any;
     totalItems: any;
     queryCount: any;
@@ -32,6 +36,7 @@ currentAccount: any;
     constructor(
         private inventoryService: InventoryService,
         private parseLinks: JhiParseLinks,
+        private shoppingListService: Shopping_ListService,
         private jhiAlertService: JhiAlertService,
         private principal: Principal,
         private activatedRoute: ActivatedRoute,
@@ -134,6 +139,34 @@ currentAccount: any;
             result.push('id');
         }
         return result;
+    }
+    
+    save(data) {
+        this.isSaving = true;
+        var date = new Date();
+        this.shoppingList = new Shopping_List();
+        this.shoppingList.items = data + "";
+        this.shoppingList.notes = "REMINDER: Stock up on this item! Created on: " + date;
+        if (this.shoppingList.id !== undefined) {
+            this.subscribeToSaveResponse(
+                this.shoppingListService.update(this.shoppingList));
+        } else {
+            this.subscribeToSaveResponse(
+                this.shoppingListService.create(this.shoppingList));
+        }
+    }
+    private subscribeToSaveResponse(result: Observable<Shopping_List>) {
+        result.subscribe((res: Shopping_List) =>
+            this.onSaveSuccess(res), (res: Response) => this.onSaveError());
+    }
+    
+    private onSaveSuccess(result: Shopping_List) {
+        this.eventManager.broadcast({ name: 'shopping_ListListModification', content: 'OK'});
+        this.isSaving = false;
+    }
+    
+    private onSaveError() {
+        this.isSaving = false;
     }
 
     private onSuccess(data, headers) {

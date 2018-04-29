@@ -34,12 +34,60 @@ export interface IAlert {
       </button>
     </div>
     <div class="modal-body">
-      <p align="center"><img src="{{image}}"><p>
-      <p>Yields: {{ recipe.yield }}</p>
-      <p>
+<ngb-tabset>
+  <ngb-tab title="Main Information">
+    <ng-template ngbTabContent>
+        <p></p>
+        <div align="center">
+          <h2>{{ recipe.name }}</h2><div></div><img src="{{image}}" class="rounded img-responsive">
+          <div *ngIf="recipe.yield">
+              <b>Yields:</b> {{ recipe.yield }}
+          </div>
+          <div *ngIf="recipe.totalTime">
+              <b>Total Time:</b> {{ recipe.totalTime }}
+          </div>
+          <div *ngIf="cuisine">
+              <b>Cuisine:</b>
+              <ng-container *ngFor="let c of cuisine">
+                   {{ c }},
+               </ng-container>
+          </div>
+          </div>
+    </ng-template>
+  </ngb-tab>
+  
+  
+    <ngb-tab title="Detailed Ingredient Information">
+        <ng-template ngbTabContent>
+            <h2><div align = "center">Ingredients: </div></h2>
+            <div *ngFor="let ingredient of recipe.ingredientLines; let i = index">
+                 {{ i+1 }} : {{ ingredient }}
+            </div>
+      </ng-template>
+    </ngb-tab>
+        
+        <ngb-tab title="Recipe Method and Source">
+        <ng-template ngbTabContent>
+                            <p></p>
+                <h2 align = "center">Source</h2>
+                <p></p>
+                This great recipe comes courtesy of {{ recipe.source.sourceDisplayName }}
+                <div></div>
+                You can find more great recipes from them at <a> {{recipe.source.sourceSiteUrl }} </a>
+                <p></p>
+                <h2 align = "center">Method</h2>
+                To get the method to make this recipe, click below: <div></div>
+                <a href='{{recipe.source.sourceRecipeUrl}}' target="_blank" class="btn btn-info" role="button">Click here to go to the source!</a>
+      </ng-template>
+    </ngb-tab>
+    
+        
+
+  </ngb-tabset> 
+  
     </div>
     <div class="modal-footer">
-      <td><button class="btn btn-md btn-outline-primary" (click)="save(recipe)">Save</button></td>
+      <td><button class="btn btn-md btn-outline-primary" (click)="save(recipe)">Save to Favourites</button></td>
       <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
     </div>`
 })
@@ -52,7 +100,6 @@ export class NgbdModalContent {
   recipeIngredients = new Array();
   testVar: Boolean = true;
   favorite: Favorites;
-  itemCategory: Boolean = false;
   currentAccount: any;
   largeImageDetails: any[];
   eventSubscriber: Subscription;
@@ -141,6 +188,7 @@ export class NgbdModalContent {
       <p>Have you been favoriting recipes? If so, this might be the ideal tool for you</p>
       <p>This tool will find your favorites and the most commonly occurring cuisine type amongst them. 
       Then, you will get recommendations based on the cuisine you seem to be liking the most</p>
+      <p>(Supported Cuisines: Chinese, Indian, Italian, Mexican)
     </ng-template>
   </ngb-tab>
   </ngb-tabset>
@@ -226,6 +274,8 @@ export class RecommendComponent implements OnInit, OnDestroy {
     images: Array<string>;
     ingredientNames = new Array();
     //Important categories
+    itemCategory: Boolean = false;
+    listItemCategories: Boolean = false;
     fruitInventory = new Array();
     vegInventory = new Array();
     meatInventory = new Array();
@@ -238,8 +288,8 @@ export class RecommendComponent implements OnInit, OnDestroy {
     recipeIngredients = new Array();
     beginVar: Boolean = true;
     shoppingList: Shopping_List;
-    itemCategory: Boolean = false;
     currentAccount: any;
+    favoriteVariable: any;
     largeImageDetails: any[];
     eventSubscriber: Subscription;
     currentSearch: string;
@@ -320,6 +370,7 @@ export class RecommendComponent implements OnInit, OnDestroy {
     
     findInventoryCategoryAndName(inventories){
         for(let inventory of inventories){
+           if(inventory.category != null){
            if(inventory.category.id === 3)
                this.fruitInventory.push(inventory);
            if(inventory.category.id === 1)
@@ -328,7 +379,10 @@ export class RecommendComponent implements OnInit, OnDestroy {
                this.vegInventory.push(inventory);
            if(inventory.category.id === 2)
                this.grainInventory.push(inventory);
+           }
+           if(inventory.ingredient_name != null )
            this.ingredientNames.push(inventory.ingredient_name.toLowerCase());
+           
         }
         console.log( this.ingredientNames );
         console.log( this.fruitInventory );
@@ -337,6 +391,12 @@ export class RecommendComponent implements OnInit, OnDestroy {
     beginRecommendations(){
         this.beginVar = false;
         this.itemCategory = true;
+        this.listItemCategories = false;
+    }
+    
+    listCategories(){
+        this.itemCategory = false;
+        this.listItemCategories = true;
     }
     
     listIngredients(query: string){
@@ -378,7 +438,6 @@ export class RecommendComponent implements OnInit, OnDestroy {
             var ingredientsNotOnHand = new Array();
             for(let recipeIngredient of recipe.ingredients){
                 if(this.ingredientNames.indexOf(recipeIngredient) == -1){
-                    
                     ingredientsNotOnHand.push(recipeIngredient);
                 }
                 else
@@ -386,6 +445,7 @@ export class RecommendComponent implements OnInit, OnDestroy {
             }
             recipe.ingredients_owned = ingredientsOnHand;
             recipe.ingredients_not_owned = ingredientsNotOnHand;
+            this.testBoogaloo(recipe);
         }
         console.log(this.recipes);
     }
@@ -403,6 +463,7 @@ export class RecommendComponent implements OnInit, OnDestroy {
         }   
         query.largeImage = this.largeImage;
     }
+    
     
     timelyRecipe(){
         this.recipeParam = "";
@@ -507,7 +568,7 @@ export class RecommendComponent implements OnInit, OnDestroy {
         console.log(this.userFavorites);
         for(let userFavorite of this.userFavorites){
             console.log(userFavorite.cuisine)
-            if(typeof userFavorite.cuisine !== "undefined"){
+            if(typeof userFavorite.cuisine !== "undefined" && userFavorite.cuisine != null){
                 if(userFavorite.cuisine.toLowerCase().indexOf("mexican") != -1){
                     mexicanFavorite++;
                 }
@@ -524,18 +585,37 @@ export class RecommendComponent implements OnInit, OnDestroy {
             }
         }
 
-        if(chineseFavorite > mexicanFavorite && chineseFavorite > italianFavorite && chineseFavorite > indianFavorite)
+        if(chineseFavorite > mexicanFavorite && chineseFavorite > italianFavorite && chineseFavorite > indianFavorite){
+            this.favoriteVariable = "<h4>You seem to be favouriting a lot of Chinese recipes! Here are some more for you.<div></div>" +
+            		"(FoodPal highly recommends the Char Siu pork!)</h4>"
             this.recipeParam += "&allowedCuisine[]=cuisine^cuisine-chinese";
-        if(mexicanFavorite > chineseFavorite && mexicanFavorite > italianFavorite && mexicanFavorite > indianFavorite)
+        }
+        else if(mexicanFavorite > chineseFavorite && mexicanFavorite > italianFavorite && mexicanFavorite > indianFavorite)
+        {    
+            this.favoriteVariable = "<h4>You seem to be favouriting a lot of Mexican recipes. Let's give you some more Mexican recommendations!</h4>"
             this.recipeParam += "&allowedCuisine[]=cuisine^cuisine-mexican";
-        if(italianFavorite > chineseFavorite && italianFavorite > mexicanFavorite && italianFavorite > indianFavorite)
+        }
+        else if(italianFavorite > chineseFavorite && italianFavorite > mexicanFavorite && italianFavorite > indianFavorite)
+        {  
+            this.favoriteVariable = "<h4>Ah, Italy! A country of romance, fine art and, of course, fine food! Let's give you some more Italian recommendations!</h4>"
             this.recipeParam += "&allowedCuisine[]=cuisine^cuisine-italian";
-        if(indianFavorite > chineseFavorite && indianFavorite > mexicanFavorite && indianFavorite > italianFavorite)
+        }
+        else if(indianFavorite > chineseFavorite && indianFavorite > mexicanFavorite && indianFavorite > italianFavorite)
+        {  
+            this.favoriteVariable = "<h4>You seem to be favouriting a lot of Indian recipes. Let's give you some more Indian recommendations!</h4>"
             this.recipeParam += "&allowedCuisine[]=cuisine^cuisine-indian";
+        }
+        else{
+            this.favoriteVariable = "<h4>You seem to be favoriting everything equally! Here are some more general recommendations</h4>"
+                
+        }
 
-
+            
         console.log(this.recipeParam) 
         console.log(mexicanFavorite, italianFavorite, indianFavorite);
+        if(mexicanFavorite == 0 && chineseFavorite == 0 && indianFavorite == 0 && italianFavorite == 0)
+            this.favoriteVariable = "<h4>We couldn't find any supported cuisines in your favourites.<div></div>" +
+            		"Here are some other popular FoodPal recommendations!</h4>";
         return this._recipeListService.getRecipe(this.recipeParam).subscribe(
                 data => this.handleSuccess(data),
                 error => this.handleError(error),
@@ -547,27 +627,36 @@ export class RecommendComponent implements OnInit, OnDestroy {
       }
     
     save(data) {
-        this.isSaving = true;
-        var today = new Date();
-        this.shoppingList = new Shopping_List();
-        this.shoppingList.items = "";
-        for(let ingredient of data.ingredients_not_owned){
-            if(ingredient != 'undefined')
-                this.shoppingList.items += ingredient.toString() + ', ';
+        if(data.ingredients_not_owned.length > 0){
+            this.isSaving = true;
+            var today = new Date();
+            this.shoppingList = new Shopping_List();
+            this.shoppingList.items = "";
+            for(let ingredient of data.ingredients_not_owned){
+                if(ingredient != 'undefined')
+                    this.shoppingList.items += ingredient.toString() + ', ';
+            }
+            this.shoppingList.notes = "Created on: " + today + ' from the following recipe: ' + data.recipeName;
+            if (this.shoppingList.id !== undefined) {
+                this.subscribeToSaveResponse(
+                    this.shoppingListService.update(this.shoppingList));
+            } else {
+                this.subscribeToSaveResponse(
+                    this.shoppingListService.create(this.shoppingList));
+                this.alerts.push({
+                    id: 1,
+                    type: 'success',
+                    message: 'Missing ingredients for ' + data.recipeName+' have been added to a new shopping list'});
+            }
         }
-        this.shoppingList.notes = "Created on: " + today + ' from the following recipe: ' + data.recipeName;
-        if (this.shoppingList.id !== undefined) {
-            this.subscribeToSaveResponse(
-                this.shoppingListService.update(this.shoppingList));
-        } else {
-            this.subscribeToSaveResponse(
-                this.shoppingListService.create(this.shoppingList));
-        }
+        else{
+            this.alerts.push({
+                id: 1,
+                type: 'danger',
+                message: 'You are not missing any ingredients for ' + data.recipeName});
+    }
         
-        this.alerts.push({
-            id: 1,
-            type: 'success',
-            message: 'Missing ingredients for ' + data.recipeName+' have been added to a new shopping list'});
+       
           
     }
     

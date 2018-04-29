@@ -1,5 +1,4 @@
-
-<div *ngIf="favorites">
+<div *ngIf="favorites && favorites.user?.login == account.login">
     <h2><span>Favorites</span> {{favorites.id}}</h2>
     <hr>
     <jhi-alert-error></jhi-alert-error>
@@ -38,5 +37,13 @@
             queryParamsHandling="merge"
             class="btn btn-primary">
         <span class="fa fa-pencil"></span>&nbsp;<span> Edit</span>
+    </button>
+</div>
+<div *ngIf="favorites && favorites.user?.login != account.login">
+<span>No peeking at other user's favorites!</span><div></div>
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span> Back</span>
     </button>
 </div>

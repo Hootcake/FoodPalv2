@@ -51,9 +51,11 @@
                     </div>
                 </td>
                 <td>
-                	<div *ngIf="inventory.quantity < 5">
+                	<div *ngIf="inventory.quantity <= 2 && inventory.quantity != null">
                 		<div class="alert alert-warning">
   							<strong>Warning!</strong> Your stock on this item is running low!
+  							<button class="btn btn-sm btn-outline-success" (click)="save(inventory.ingredient_name)">
+							 Add ingredient to shopping list</button>       						
 						</div>
                 	</div>
                 </td>

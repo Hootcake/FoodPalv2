@@ -1,3 +1,5 @@
+<div *ngIf="shopping_List && shopping_List.user?.login == account.login">
+
 <form name="deleteForm" (ngSubmit)="confirmDelete(shopping_List.id)">
     <div class="modal-header">
         <h4 class="modal-title">Confirm delete operation</h4>
@@ -17,3 +19,15 @@
         </button>
     </div>
 </form>
+</div>
+<div *ngIf="shopping_List.user != null && shopping_List.user?.login != account.login">
+	      <div class="modal-header">
+        <h4 class="modal-title">Error</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+                (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+	  <span>Please don't delete other people's shopping lists!</span>
+	</div>
+</div>
+

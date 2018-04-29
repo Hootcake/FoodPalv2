@@ -10,7 +10,7 @@ import { Shopping_List } from './shopping-list.model';
 import { Shopping_ListPopupService } from './shopping-list-popup.service';
 import { Shopping_ListService } from './shopping-list.service';
 import { User, UserService } from '../../shared';
-import { ResponseWrapper } from '../../shared';
+import { ResponseWrapper, Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-shopping-list-dialog',
@@ -20,7 +20,7 @@ export class Shopping_ListDialogComponent implements OnInit {
 
     shopping_List: Shopping_List;
     isSaving: boolean;
-
+    account: Account
     users: User[];
 
     constructor(
@@ -28,11 +28,15 @@ export class Shopping_ListDialogComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private shopping_ListService: Shopping_ListService,
         private userService: UserService,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
+        private principal: Principal,
     ) {
     }
 
     ngOnInit() {
+        this.principal.identity().then((account) => {
+            this.account = account;
+        });
         this.isSaving = false;
         this.userService.query()
             .subscribe((res: ResponseWrapper) => { this.users = res.json; }, (res: ResponseWrapper) => this.onError(res.json));

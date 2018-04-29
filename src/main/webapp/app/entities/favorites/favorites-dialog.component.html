@@ -1,3 +1,5 @@
+<div *ngIf="favorites.user == null || favorites.user?.login == account.login">
+
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
 
     <div class="modal-header">
@@ -50,3 +52,14 @@
         </button>
     </div>
 </form>
+</div>
+<div *ngIf="favorites.user != null && favorites.user?.login != account.login">
+	      <div class="modal-header">
+        <h4 class="modal-title">Error</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+                (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+	  <span>Please don't edit other people's items!</span>
+	</div>
+</div>

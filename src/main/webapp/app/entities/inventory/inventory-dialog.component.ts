@@ -11,7 +11,7 @@ import { InventoryPopupService } from './inventory-popup.service';
 import { InventoryService } from './inventory.service';
 import { User, UserService } from '../../shared';
 import { Category, CategoryService } from '../category';
-import { ResponseWrapper } from '../../shared';
+import { ResponseWrapper, Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-inventory-dialog',
@@ -23,7 +23,7 @@ export class InventoryDialogComponent implements OnInit {
     isSaving: boolean;
 
     users: User[];
-
+    account: Account;
     categories: Category[];
 
     constructor(
@@ -32,11 +32,15 @@ export class InventoryDialogComponent implements OnInit {
         private inventoryService: InventoryService,
         private userService: UserService,
         private categoryService: CategoryService,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
+        private principal: Principal,
     ) {
     }
 
     ngOnInit() {
+        this.principal.identity().then((account) => {
+            this.account = account;
+        });
         this.isSaving = false;
         this.userService.query()
             .subscribe((res: ResponseWrapper) => { this.users = res.json; }, (res: ResponseWrapper) => this.onError(res.json));

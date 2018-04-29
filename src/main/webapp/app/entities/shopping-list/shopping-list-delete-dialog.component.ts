@@ -7,6 +7,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Shopping_List } from './shopping-list.model';
 import { Shopping_ListPopupService } from './shopping-list-popup.service';
 import { Shopping_ListService } from './shopping-list.service';
+import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-shopping-list-delete-dialog',
@@ -15,18 +16,25 @@ import { Shopping_ListService } from './shopping-list.service';
 export class Shopping_ListDeleteDialogComponent {
 
     shopping_List: Shopping_List;
-
+    account: Account;
     constructor(
         private shopping_ListService: Shopping_ListService,
         public activeModal: NgbActiveModal,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
+        private principal: Principal,
     ) {
     }
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
-
+    
+    ngOnInit(){
+        this.principal.identity().then((account) => {
+            this.account = account;
+        });
+    }
+    
     confirmDelete(id: number) {
         this.shopping_ListService.delete(id).subscribe((response) => {
             this.eventManager.broadcast({

@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
-
+import { Principal } from '../../shared'
 import { Favorites } from './favorites.model';
 import { FavoritesPopupService } from './favorites-popup.service';
 import { FavoritesService } from './favorites.service';
@@ -15,14 +15,21 @@ import { FavoritesService } from './favorites.service';
 export class FavoritesDeleteDialogComponent {
 
     favorites: Favorites;
-
+    account: Account;
     constructor(
         private favoritesService: FavoritesService,
         public activeModal: NgbActiveModal,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
+        private principal: Principal
     ) {
     }
-
+    
+    ngOnInit() {
+        this.principal.identity().then((account) => {
+            this.account = account;
+        });
+    }
+    
     clear() {
         this.activeModal.dismiss('cancel');
     }

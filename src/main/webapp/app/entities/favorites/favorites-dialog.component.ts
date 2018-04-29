@@ -10,7 +10,7 @@ import { Favorites } from './favorites.model';
 import { FavoritesPopupService } from './favorites-popup.service';
 import { FavoritesService } from './favorites.service';
 import { User, UserService } from '../../shared';
-import { ResponseWrapper } from '../../shared';
+import { ResponseWrapper, Principal  } from '../../shared';
 
 @Component({
     selector: 'jhi-favorites-dialog',
@@ -20,7 +20,7 @@ export class FavoritesDialogComponent implements OnInit {
 
     favorites: Favorites;
     isSaving: boolean;
-
+    account: Account;
     users: User[];
 
     constructor(
@@ -28,11 +28,15 @@ export class FavoritesDialogComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private favoritesService: FavoritesService,
         private userService: UserService,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
+        private principal: Principal,
     ) {
     }
 
     ngOnInit() {
+        this.principal.identity().then((account) => {
+            this.account = account;
+        });
         this.isSaving = false;
         this.userService.query()
             .subscribe((res: ResponseWrapper) => { this.users = res.json; }, (res: ResponseWrapper) => this.onError(res.json));
