@@ -466,11 +466,14 @@ export class RecommendComponent implements OnInit, OnDestroy {
     
     
     timelyRecipe(){
+        this.favoriteVariable = "";
+
         this.recipeParam = "";
         var currentTime = new Date();
         console.log(currentTime.getHours());
         var timeInHours = currentTime.getHours();
         if(timeInHours >=6 && timeInHours<=10){
+            this.favoriteVariable = "<h4>Showing Recommendations for Breakfast</h4>"
             console.log('Breakfast');
             this.recipeParam += '&allowedCourse[]=course^course-Breakfast and Brunch'+
             '&excludedCourse[]=course^course-Main Dishes';
@@ -478,6 +481,7 @@ export class RecommendComponent implements OnInit, OnDestroy {
         }
         if(timeInHours > 10 && timeInHours <=15){
             console.log('Brunch');
+            this.favoriteVariable = "<h4>Showing Recommendations for Breakfast and Brunch</h4>"
             this.recipeParam += '&allowedCourse[]=course^course-Breakfast and Brunch'
                 +'&allowedCourse[]=course^course-Salads'
                 +'&allowedCourse[]=course^course-Soups'
@@ -485,12 +489,14 @@ export class RecommendComponent implements OnInit, OnDestroy {
         }
         if(timeInHours >= 12 && timeInHours <=14){
             console.log('Lunch');
+            this.favoriteVariable = "<h4>Showing Recommendations for Lunch</h4>"
             this.recipeParam += '&allowedCourse[]=course^course-Lunch'
                 +'&excludedCourse[]=course^course-Main Dishes'
                 +'&excludedCourse[]=course^course-Breakfast and Brunch';
         }
         if(timeInHours >= 15 && timeInHours <18){
             console.log('Tea');
+            this.favoriteVariable = "<h4>Showing Recommendations for Teatime</h4>"
             this.recipeParam += '&allowedCourse[]=course^course-Appetizers'
                 +'&allowedCourse[]=course^course-Salads'
                 +'&allowedCourse[]=course^course-Soups'
@@ -499,6 +505,7 @@ export class RecommendComponent implements OnInit, OnDestroy {
             
         }
         if(timeInHours >= 18 && timeInHours <=21){
+            this.favoriteVariable = "<h4>Showing Recommendations for Dinner</h4>"
             console.log('Dinner');
            this.recipeParam += '&allowedCourse[]=course^course-Main Dishes'
             +'&allowedCourse[]=course^course-Appetizers'
@@ -506,8 +513,8 @@ export class RecommendComponent implements OnInit, OnDestroy {
             +'&excludedCourse[]=course^course-Breakfast and Brunch'
             
         }
-        if(timeInHours >=21){
-
+        if(timeInHours >=21 || timeInHours <6){
+            this.favoriteVariable = "<h4>Showing Recommendations for Late-Night Dinner and Dessert</h4>"
            this.recipeParam += '&allowedCourse[]=course^course-Main Dishes'
             +'&allowedCourse[]=course^course-Desserts'
             +'&excludedCourse[]=course^course-Lunch'
@@ -565,6 +572,7 @@ export class RecommendComponent implements OnInit, OnDestroy {
         var italianFavorite=0; 
         var mexicanFavorite=0;
         this.recipeParam = "";
+        this.favoriteVariable = "";
         console.log(this.userFavorites);
         for(let userFavorite of this.userFavorites){
             console.log(userFavorite.cuisine)

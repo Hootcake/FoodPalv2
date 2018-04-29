@@ -17,6 +17,10 @@
     width: 300px !important;
 }
 
+.dietList {
+    width: 200px !important;
+}
+
 .borderless td, .borderless th {
     border: none;
 }
@@ -28,6 +32,10 @@
         <span class="hipster img-fluid rounded"></span>
     </div>
     <div class="col-md-9">
+    		             <p *ngFor="let alert of alerts">
+  						<ngb-alert [type]="alert.type" (close)="closeAlert(alert)">{{ alert.message }}</ngb-alert>
+					</p>
+					
         <h1 class="display-4">Welcome to FoodPal!</h1>
         <p class="lead">
         <ng-container *ngIf="!isAuthenticated()">Liking what you see? Make sure to register for additional perks!</ng-container>
@@ -46,10 +54,19 @@
       <li class="nav-item">
     <div ngbDropdown class="d-inline-block">
       <a class="nav-link" id="dropdownDiet" ngbDropdownToggle>Dietary Requirements</a>    
-      <div ngbDropdownMenu aria-labelledby="dropdownDiet">			
-		        <input type="checkbox" (change)="testFunc($event)"> Lacto-Vegetarian 				    		        
+      <div ngbDropdownMenu aria-labelledby="dropdownDiet" class="dietList">			
+		        <div align="center"><input type="checkbox" (change)="applyDiet($event, 'lacto-veg')"> Lacto-Vegetarian 	</div>			    		        
      				<hr>
-  
+     			<div align="center"><input type="checkbox" (change)="applyDiet($event, 'ovo-veg')"> Ovo-Vegetarian 	</div>			    		        
+     				<hr>
+		        <div align="center"><input type="checkbox" (change)="applyDiet($event, 'pesc-veg')"> Pescetarian 	</div>			    		        
+     				<hr>     				
+		        <div align="center"><input type="checkbox" (change)="applyDiet($event, 'vegan')"> Vegan 	</div>			    		        
+     				<hr>
+		        <div align="center"><input type="checkbox" (change)="applyDiet($event, 'vegetarian')"> Vegetarian 	</div>			    		        
+     				<hr> 
+		        <div align="center"><input type="checkbox" (change)="applyDiet($event, 'paleo')"> Paleo 	</div>			    		        
+     				<hr>        				    				  
     </div>
   </div>
       </li>

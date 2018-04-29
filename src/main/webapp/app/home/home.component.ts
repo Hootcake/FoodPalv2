@@ -6,6 +6,8 @@ import { Observable } from "rxjs/Observable";
 import { FavoritesService } from "../entities/favorites/favorites.service";
 import { Favorites } from '../entities/favorites/favorites.model';
 import { Subscription } from "rxjs/Subscription";
+import { Shopping_ListService, Shopping_List } from "../entities/shopping-list";
+import { IAlert } from "../entities/recommend";
 
 //Modal dialog for recipe details
 @Component({
@@ -151,6 +153,10 @@ export class NgbdModalContent {
 
 })
 export class HomeComponent implements OnInit {
+    @Input()
+    public alerts: Array<IAlert> = [];
+    isSaving: boolean;
+    shoppingList: Shopping_List;
     largeImage: any;
     account: Account;
     modalRef: NgbModalRef;
@@ -174,6 +180,7 @@ export class HomeComponent implements OnInit {
     dietChecked: boolean = false;
     constructor(
         private principal: Principal,
+        private shoppingListService: Shopping_ListService,
         private loginModalService: LoginModalService,
         private eventManager: JhiEventManager,
         private _recipeListService: RecipeListService,
@@ -202,15 +209,70 @@ export class HomeComponent implements OnInit {
         return this.principal.isAuthenticated();
     }
 
-    testFunc(e) {
-        if(e.target.checked){
-            this.dietChecked = true;
-            this.searchRecipes(null, '388^Lacto vegetarian');
+    applyDiet(e, dietName:string) {
+        switch(dietName){
+            case 'lacto-veg':
+                if(e.target.checked){
+                    this.dietChecked = true;
+                    this.searchRecipes(null, '388^Lacto vegetarian');
+                }
+                if(this.dietChecked == true && !e.target.checked){
+                    this.diets.splice(this.diets.indexOf('388^Lacto vegetarian'), 1);
+                    this.refreshSearch();
+                }
+                
+            case 'ovo-veg':
+                if(e.target.checked){
+                    this.dietChecked = true;
+                    this.searchRecipes(null, '389^Ovo vegetarian');
+                }
+                if(this.dietChecked == true && !e.target.checked){
+                    this.diets.splice(this.diets.indexOf('389^Ovo vegetarian'), 1);
+                    this.refreshSearch();
+                }
+                
+            case 'pesc-veg':
+                if(e.target.checked){
+                    this.dietChecked = true;
+                    this.searchRecipes(null, '390^Pescetarian');
+                }
+                if(this.dietChecked == true && !e.target.checked){
+                    this.diets.splice(this.diets.indexOf('390^Pescetarian'), 1);
+                    this.refreshSearch();
+                }
+                
+            case 'vegan':
+                if(e.target.checked){
+                    this.dietChecked = true;
+                    this.searchRecipes(null, '386^Vegan');
+                }
+                if(this.dietChecked == true && !e.target.checked){
+                    this.diets.splice(this.diets.indexOf('386^Vegan'), 1);
+                    this.refreshSearch();
+                }
+                
+            case 'vegetarian':
+                if(e.target.checked){
+                    this.dietChecked = true;
+                    this.searchRecipes(null, '387^Lacto-ovo vegetarian');
+                }
+                if(this.dietChecked == true && !e.target.checked){
+                    this.diets.splice(this.diets.indexOf('387^Lacto-ovo vegetarian'), 1);
+                    this.refreshSearch();
+                }
+                
+            case 'paleo':
+                if(e.target.checked){
+                    this.dietChecked = true;
+                    this.searchRecipes(null, '403^Paleo');
+                }
+                if(this.dietChecked == true && !e.target.checked){
+                    this.diets.splice(this.diets.indexOf('403^Paleo'), 1);
+                    this.refreshSearch();
+                }
+                
         }
-        if(this.dietChecked == true && !e.target.checked){
-            this.diets.splice(this.diets.indexOf('388^Lacto vegetarian'), 1);
-            this.refreshSearch();
-        }
+        
     }
    
     login() {
@@ -224,6 +286,56 @@ export class HomeComponent implements OnInit {
         console.log(this.recipeIngredients);
     } 
    
+    save(data) {
+        if(data.ingredients_not_owned.length > 0){
+            this.isSaving = true;
+            var today = new Date();
+            this.shoppingList = new Shopping_List();
+            this.shoppingList.items = "";
+            for(let ingredient of data.ingredients_not_owned){
+                if(ingredient != 'undefined')
+                    this.shoppingList.items += ingredient.toString() + ', ';
+            }
+            this.shoppingList.notes = "Created on: " + today + ' from the following recipe: ' + data.recipeName;
+            if (this.shoppingList.id !== undefined) {
+                this.subscribeToSaveResponse(
+                    this.shoppingListService.update(this.shoppingList));
+            } else {
+                this.subscribeToSaveResponse(
+                    this.shoppingListService.create(this.shoppingList));
+                this.alerts.push({
+                    id: 1,
+                    type: 'success',
+                    message: 'Missing ingredients for ' + data.recipeName+' have been added to a new shopping list'});
+            }
+        }
+        else{
+            this.alerts.push({
+                id: 1,
+                type: 'danger',
+                message: 'You are not missing any ingredients for ' + data.recipeName});
+        }
+    }
+    
+    public closeAlert(alert: IAlert) {
+        const index: number = this.alerts.indexOf(alert);
+        this.alerts.splice(index, 1);
+      }
+    
+    private subscribeToSaveResponse(result: Observable<Shopping_List>) {
+        result.subscribe((res: Shopping_List) =>
+            this.onSaveSuccess(res), (res: Response) => this.onSaveError());
+    }
+    
+    private onSaveSuccess(result: Shopping_List) {
+        this.eventManager.broadcast({ name: 'shopping_ListListModification', content: 'OK'});
+        this.isSaving = false;
+    }
+    
+    private onSaveError() {
+        this.isSaving = false;
+    }
+    
     handleSuccess(data){
         this.recipeFound = true;
         this.recipes = data.matches;
