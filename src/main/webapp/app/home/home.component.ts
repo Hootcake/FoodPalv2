@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { NgbModalRef, NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef, NgbModal, NgbActiveModal, NgbDropdownConfig } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Account, LoginModalService, Principal, RecipeListService } from '../shared';
 import { Observable } from "rxjs/Observable";
@@ -70,7 +70,7 @@ import { Subscription } from "rxjs/Subscription";
   
     </div>
     <div class="modal-footer">
-      <td><button class="btn btn-md btn-outline-primary" (click)="save(recipe)">Save to Favourites</button></td>
+      <td *jhiHasAnyAuthority="'ROLE_USER'"><button class="btn btn-md btn-outline-primary" (click)="save(recipe)">Save to Favourites</button></td>
       <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
     </div>`
 })
@@ -146,7 +146,8 @@ export class NgbdModalContent {
     templateUrl: './home.component.html',
     styleUrls: [
         'home.css'
-    ]
+    ],
+    providers: [NgbDropdownConfig]
 
 })
 export class HomeComponent implements OnInit {
@@ -176,8 +177,10 @@ export class HomeComponent implements OnInit {
         private loginModalService: LoginModalService,
         private eventManager: JhiEventManager,
         private _recipeListService: RecipeListService,
-        private modalService: NgbModal
+        private modalService: NgbModal,
+        config: NgbDropdownConfig
         ) {
+        config.autoClose = false;
     }
 
     ngOnInit() {
