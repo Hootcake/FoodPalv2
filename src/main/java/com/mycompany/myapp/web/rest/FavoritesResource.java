@@ -2,9 +2,13 @@ package com.mycompany.myapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.mycompany.myapp.domain.Favorites;
-
+import com.mycompany.myapp.domain.Inventory;
+import com.mycompany.myapp.domain.User;
 import com.mycompany.myapp.repository.FavoritesRepository;
+import com.mycompany.myapp.repository.UserRepository;
 import com.mycompany.myapp.repository.search.FavoritesSearchRepository;
+import com.mycompany.myapp.security.AuthoritiesConstants;
+import com.mycompany.myapp.security.SecurityUtils;
 import com.mycompany.myapp.web.rest.errors.BadRequestAlertException;
 import com.mycompany.myapp.web.rest.util.HeaderUtil;
 import com.mycompany.myapp.web.rest.util.PaginationUtil;
@@ -16,6 +20,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -34,6 +41,7 @@ import static org.elasticsearch.index.query.QueryBuilders.*;
 @RestController
 @RequestMapping("/api")
 public class FavoritesResource {
+	private final UserRepository userRepository;
 
     private final Logger log = LoggerFactory.getLogger(FavoritesResource.class);
 
@@ -43,9 +51,10 @@ public class FavoritesResource {
 
     private final FavoritesSearchRepository favoritesSearchRepository;
 
-    public FavoritesResource(FavoritesRepository favoritesRepository, FavoritesSearchRepository favoritesSearchRepository) {
+    public FavoritesResource(FavoritesRepository favoritesRepository, FavoritesSearchRepository favoritesSearchRepository, 	UserRepository userRepository) {
         this.favoritesRepository = favoritesRepository;
         this.favoritesSearchRepository = favoritesSearchRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -62,6 +71,9 @@ public class FavoritesResource {
         if (favorites.getId() != null) {
             throw new BadRequestAlertException("A new favorites cannot already have an ID", ENTITY_NAME, "idexists");
         }
+        User user=new User();
+        user= userRepository.findOneByLogin(getCurrentUserLogin()).get();
+    	favorites.setUser(user);   
         Favorites result = favoritesRepository.save(favorites);
         favoritesSearchRepository.save(result);
         return ResponseEntity.created(new URI("/api/favorites/" + result.getId()))
@@ -102,7 +114,11 @@ public class FavoritesResource {
     @Timed
     public ResponseEntity<List<Favorites>> getAllFavorites(Pageable pageable) {
         log.debug("REST request to get a page of Favorites");
-        Page<Favorites> page = favoritesRepository.findAll(pageable);
+        Page<Favorites> page;
+        if (SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN)) {
+        	page = favoritesRepository.findAll(pageable);
+        } else 
+        	page = favoritesRepository.findByUserIsCurrentUser(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/favorites");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -152,5 +168,18 @@ public class FavoritesResource {
         HttpHeaders headers = PaginationUtil.generateSearchPaginationHttpHeaders(query, page, "/api/_search/favorites");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
+    
+    public String getCurrentUserLogin() {
+        org.springframework.security.core.context.SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+        String login = null;
+        if (authentication != null)
+            if (authentication.getPrincipal() instanceof UserDetails)
+             login = ((UserDetails) authentication.getPrincipal()).getUsername();
+            else if (authentication.getPrincipal() instanceof String)
+             login = (String) authentication.getPrincipal();
+
+        return login; 
+        }
 
 }

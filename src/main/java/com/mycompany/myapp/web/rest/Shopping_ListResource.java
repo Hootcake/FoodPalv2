@@ -1,11 +1,14 @@
 package com.mycompany.myapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.mycompany.myapp.domain.Inventory;
 import com.mycompany.myapp.domain.Shopping_List;
 import com.mycompany.myapp.domain.User;
 import com.mycompany.myapp.repository.Shopping_ListRepository;
 import com.mycompany.myapp.repository.UserRepository;
 import com.mycompany.myapp.repository.search.Shopping_ListSearchRepository;
+import com.mycompany.myapp.security.AuthoritiesConstants;
+import com.mycompany.myapp.security.SecurityUtils;
 import com.mycompany.myapp.web.rest.errors.BadRequestAlertException;
 import com.mycompany.myapp.web.rest.util.HeaderUtil;
 import com.mycompany.myapp.web.rest.util.PaginationUtil;
@@ -112,7 +115,11 @@ public class Shopping_ListResource {
     @Timed
     public ResponseEntity<List<Shopping_List>> getAllShopping_Lists(Pageable pageable) {
         log.debug("REST request to get a page of Shopping_Lists");
-        Page<Shopping_List> page = shopping_ListRepository.findAll(pageable);
+        Page<Shopping_List> page;
+        if (SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN)) {
+        	page = shopping_ListRepository.findAll(pageable);
+        } else 
+        	page = shopping_ListRepository.findByUserIsCurrentUser(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/shopping-lists");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

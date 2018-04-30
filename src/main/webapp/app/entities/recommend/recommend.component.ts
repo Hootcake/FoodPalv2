@@ -171,7 +171,7 @@ export class NgbdModalContent {
     <ng-template ngbTabContent>
       <p>Upon selecting this option, you will be shown various categories of items. 
       These categories contain items that can be used as the main ingredient.</p>
-      <p>From there, you can select one of the ingredients you own from that category. 
+      <p>From there, you can select one of the ingredients you own in your personal Inventory from that category. 
       After this, you will get results based on the chosen ingredient</p>
     </ng-template>
   </ngb-tab>
@@ -371,13 +371,13 @@ export class RecommendComponent implements OnInit, OnDestroy {
     findInventoryCategoryAndName(inventories){
         for(let inventory of inventories){
            if(inventory.category != null){
-           if(inventory.category.id === 3)
+           if(inventory.category.id === 2)
                this.fruitInventory.push(inventory);
            if(inventory.category.id === 1)
                this.meatInventory.push(inventory); 
-           if(inventory.category.id === 4)
+           if(inventory.category.id === 3)
                this.vegInventory.push(inventory);
-           if(inventory.category.id === 2)
+           if(inventory.category.id === 4)
                this.grainInventory.push(inventory);
            }
            if(inventory.ingredient_name != null )
@@ -385,36 +385,68 @@ export class RecommendComponent implements OnInit, OnDestroy {
            
         }
         console.log( this.ingredientNames );
+        console.log( this.meatInventory);
         console.log( this.fruitInventory );
     }
     
     beginRecommendations(){
+        this.choices = new Array();
+        this.favoriteVariable = "";
         this.beginVar = false;
         this.itemCategory = true;
         this.listItemCategories = false;
     }
     
     listCategories(){
+        this.favoriteVariable = "";
         this.itemCategory = false;
         this.listItemCategories = true;
     }
     
     listIngredients(query: string){
+            this.choices=new Array();
             switch(query){
-            case "meat":
-                 this.choices = new Array();
-                 for(let meat of this.meatInventory){
+            case 'meat':
+                this.choices=new Array();
+                 for(let meat of this.meatInventory){                     
+                    
                      this.choices.push(meat);
                  }
+                 break;
+            case 'fruit':
+                this.choices=new Array();
+                for(let fruit of this.fruitInventory){
+                   
+                    this.choices.push(fruit);
+                }
+                break;
+            case 'vegetable':
+                this.choices=new Array();
+                for(let veg of this.vegInventory){
+                   
+                    this.choices.push(veg);
+                }
+                break;
+            case 'grain':
+                this.choices=new Array();
+                for(let grain of this.grainInventory){
+                    
+                    this.choices.push(grain);
+                }
+                break;
             }
     }
     
     mainChoice(query: string){
+        this.beginRecommendations();
+        this.ingredients = new Array();
+        this.favoriteVariable = "<h4>Great! Showing you results for " +query;
         this.recipeParam = "";
         this.ingredients.push(query.toLowerCase());
         for(let ingredient of this.ingredients){
             this.recipeParam += '&allowedIngredient=' + ingredient;
         }
+        this.choices = new Array();
         return this._recipeListService.getRecipe(this.recipeParam).subscribe(
                 data => this.handleSuccess(data),
                 error => this.handleError(error),
@@ -473,7 +505,7 @@ export class RecommendComponent implements OnInit, OnDestroy {
         console.log(currentTime.getHours());
         var timeInHours = currentTime.getHours();
         if(timeInHours >=6 && timeInHours<=10){
-            this.favoriteVariable = "<h4>Showing Recommendations for Breakfast</h4>"
+            this.favoriteVariable = "<h4>Morning! Showing Recommendations for Breakfast</h4>"
             console.log('Breakfast');
             this.recipeParam += '&allowedCourse[]=course^course-Breakfast and Brunch'+
             '&excludedCourse[]=course^course-Main Dishes';
@@ -489,14 +521,14 @@ export class RecommendComponent implements OnInit, OnDestroy {
         }
         if(timeInHours >= 12 && timeInHours <=14){
             console.log('Lunch');
-            this.favoriteVariable = "<h4>Showing Recommendations for Lunch</h4>"
+            this.favoriteVariable = "<h4>Make your lunch-time better with these recommendations! Showing Recommendations for Lunch</h4>"
             this.recipeParam += '&allowedCourse[]=course^course-Lunch'
                 +'&excludedCourse[]=course^course-Main Dishes'
                 +'&excludedCourse[]=course^course-Breakfast and Brunch';
         }
         if(timeInHours >= 15 && timeInHours <18){
             console.log('Tea');
-            this.favoriteVariable = "<h4>Showing Recommendations for Teatime</h4>"
+            this.favoriteVariable = "<h4>Good evening! Showing Recommendations for Teatime</h4>"
             this.recipeParam += '&allowedCourse[]=course^course-Appetizers'
                 +'&allowedCourse[]=course^course-Salads'
                 +'&allowedCourse[]=course^course-Soups'

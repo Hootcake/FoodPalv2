@@ -93,10 +93,12 @@ export class NgbdModalContent {
     recipes: any[];
     recipeFound: boolean = false;
     recipeDetailsFound: boolean = false;
+    account: Account
     
     constructor(public activeModal: NgbActiveModal,
             private eventManager: JhiEventManager,
-            private favoriteService: FavoritesService) {}
+            private favoriteService: FavoritesService,
+            private principal: Principal) {}
     
 
     
@@ -125,6 +127,21 @@ export class NgbdModalContent {
                 this.favoriteService.create(this.favorite));
         }
 
+    }
+    
+    ngOnInit() {
+        this.principal.identity().then((account) => {
+            this.account = account;
+        });
+        this.registerAuthenticationSuccess();
+    }
+
+    registerAuthenticationSuccess() {
+        this.eventManager.subscribe('authenticationSuccess', (message) => {
+            this.principal.identity().then((account) => {
+                this.account = account;
+            });
+        });
     }
     
     private subscribeToSaveResponse(result: Observable<Favorites>) {

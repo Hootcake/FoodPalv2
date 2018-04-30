@@ -51,19 +51,25 @@
 		            		<td><button (click)="help()" type="button" class="btn btn-lg btn-outline-info">Help</button>
 		            </table>
 		            </div>
-		            <div class="table-responsive" *ngIf="listItemCategories">
-		            		<table class="table borderless">
+		            <div class="table-responsive" *ngIf="listItemCategories" align="center">
+		            		            		<span>
+		            		<h3>Please select one of the following categories, to see what ingredients you own in them: </h3>
+		            		<table class="table borderless" align="center">
+
 		            		<td><button (click)="listIngredients('meat')" type="button" class="btn btn-lg btn-outline-success">Meat</button></td>
-		            		<td><button (click)="timelyRecipe()" type="button" class="btn btn-lg btn-outline-success">Recommendations by Time</button></td>
-		            		<td><button (click)="favoriteRecommendations()" type="button" class="btn btn-lg btn-outline-success">Recommendations by Cuisine </button>
-		            		<td><button (click)="beginRecommendations()" type="button" class="btn btn-lg btn-outline-info">Back</button>
+		            		<td><button (click)="listIngredients('fruit')" type="button" class="btn btn-lg btn-outline-success">Fruit</button></td>
+		            		<td><button (click)="listIngredients('vegetable')" type="button" class="btn btn-lg btn-outline-success">Vegetables </button></td>
+		            		<td><button (click)="listIngredients('grain')" type="button" class="btn btn-lg btn-outline-success">Grain</button></td>
+		            		<td><button (click)="beginRecommendations()" type="button" class="btn btn-lg btn-outline-info">Back</button></td>
+		            		
+		            		
 		            </table>
+		            </span>
 		            </div>
-		            
 		           <ul id="menu"> 
-		           <li *ngFor="let choice of choices">
-		           		<button (click)="mainChoice(choice.ingredient_name)" type="button">{{ choice.ingredient_name }} </button>
-		           </li>
+		           <table class="table borderless" *ngFor="let choice of choices">
+		           			<tr><button class="btn btn-sm btn-outline-success" (click)="mainChoice(choice.ingredient_name)" type="button">{{ choice.ingredient_name }}</button></tr>	           		
+		           </table>
 		        	</ul>
 		      			<div align = "center">
 		      			<div [innerHtml]="favoriteVariable"></div>

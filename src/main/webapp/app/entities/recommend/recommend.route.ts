@@ -12,7 +12,7 @@ export const recommendRoute: Routes = [
         component: RecommendComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'Recommends'
+            pageTitle: 'Recommendation Hub'
         },
         canActivate: [UserRouteAccessService]
     }, {

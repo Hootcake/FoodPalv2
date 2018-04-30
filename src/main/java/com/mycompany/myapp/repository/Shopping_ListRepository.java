@@ -2,7 +2,8 @@ package com.mycompany.myapp.repository;
 
 import com.mycompany.myapp.domain.Shopping_List;
 import org.springframework.stereotype.Repository;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import java.util.List;
 
@@ -15,5 +16,8 @@ public interface Shopping_ListRepository extends JpaRepository<Shopping_List, Lo
 
     @Query("select shopping_list from Shopping_List shopping_list where shopping_list.user.login = ?#{principal.username}")
     List<Shopping_List> findByUserIsCurrentUser();
+
+    @Query("select shopping_list from Shopping_List shopping_list where shopping_list.user.login = ?#{principal.username}")
+	Page<Shopping_List> findByUserIsCurrentUser(Pageable pageable);
 
 }
